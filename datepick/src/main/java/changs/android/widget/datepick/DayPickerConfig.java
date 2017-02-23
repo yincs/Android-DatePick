@@ -36,7 +36,7 @@ public class DayPickerConfig {
 
     public long getMaxDate() {
         final Calendar calendar = Calendar.getInstance();
-        calendar.set(2017, 8, 23);
+        calendar.set(2020, 8, 23);
         return calendar.getTimeInMillis();
     }
 

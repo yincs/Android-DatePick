@@ -42,4 +42,20 @@ public class DatePicker extends FrameLayout {
         dayPickerEngine = new DayPickerEngine(context, rccView, new DayPickerConfig());
     }
 
+    public void setStartDay(int startYear, int startMonth, int startDay) {
+        dayPickerEngine.setStartDay(startYear, startMonth, startDay);
+    }
+
+
+    public void setEndDay(int endYear, int endMonth, int endDay) {
+        dayPickerEngine.setEndDay(endYear, endMonth, endDay);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
+        dayPickerEngine.setOnItemClickListener(onItemClickListener);
+    }
+
+    public interface OnItemClickListener {
+        void onItem(int year, int month, int day);
+    }
 }

@@ -1,7 +1,6 @@
 package changs.android.widget.datepick;
 
 import android.content.Context;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -42,6 +41,7 @@ class DayPickerEngine {
 
     private Calendar startCalendar;
     private Calendar endCalendar;
+    private DatePicker.OnItemClickListener onItemClickListener;
 
     //recyclerView嵌套复用item.所以采用用一个item实现
     public DayPickerEngine(Context context, RecyclerView recyclerView, DayPickerConfig dayPickerConfig) {
@@ -55,11 +55,6 @@ class DayPickerEngine {
         minDate = Calendar.getInstance(locale);
         maxDate = Calendar.getInstance(locale);
 
-//        startCalendar = initCalendar(Calendar.getInstance(locale));
-//        endCalendar = initCalendar(Calendar.getInstance(locale));
-
-        startCalendar.set(2017, 1, 23);
-        endCalendar.set(2017, 1, 26);
         inflater = LayoutInflater.from(context);
         setupConfig();
 
@@ -87,12 +82,18 @@ class DayPickerEngine {
         check();
     }
 
+
+    public void setOnItemClickListener(DatePicker.OnItemClickListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
+    }
+
     private void check() {
         if (startCalendar == null
                 || endCalendar == null) return;
 
         if (endCalendar.before(startCalendar)) {
-            throw new RuntimeException("结束日期在开始日期之前");
+            Log.e(TAG, "结束日期在开始日期之前");
+            return;
         }
 
         adapter.notifyDataForce();
@@ -131,8 +132,11 @@ class DayPickerEngine {
         }
 
 
+        int c;
+
         @Override
         public MonthViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            Log.d(TAG, "onCreateViewHolder = " + (c++));
             return new MonthViewHolder(inflater.inflate(R.layout.item_month, parent, false));
         }
 
@@ -140,7 +144,7 @@ class DayPickerEngine {
         public void onBindViewHolder(MonthViewHolder holder, int position) {
             final int year = getYearForPosition(position);
             final int month = getMonthForPosition(position);
-            holder.adapter.setTime(year, month);
+            holder.mothView.setTime(year, month);
             holder.tvMonth.setText(year + "年" + (month + 1) + "月");
         }
 
@@ -150,69 +154,106 @@ class DayPickerEngine {
         }
 
         public void notifyDataForce() {
-
+//            notifyDataSetChanged();
+            int childCount = recyclerView.getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                MonthViewHolder monthViewHolder = (MonthViewHolder) recyclerView.getChildViewHolder(recyclerView.getChildAt(i));
+                monthViewHolder.mothView.notifyDataForce();
+            }
         }
     }
 
     private class MonthViewHolder extends RecyclerView.ViewHolder {
-        final DateAdapter adapter;
         TextView tvMonth;
-        RecyclerView rccViewDate;
+        MothView mothView;
 
         public MonthViewHolder(View itemView) {
             super(itemView);
             tvMonth = (TextView) itemView.findViewById(R.id.tv_month);
-            rccViewDate = (RecyclerView) itemView.findViewById(R.id.rccViewDay);
-
-            rccViewDate.setLayoutManager(new GridLayoutManager(context, 7));
-            adapter = new DateAdapter();
-            rccViewDate.setAdapter(adapter);
-            rccViewDate.setNestedScrollingEnabled(false);
+            mothView = new MothView((ViewGroup) itemView.findViewById(R.id.dayGroup));
         }
+
     }
 
-    private class DateAdapter extends RecyclerView.Adapter<DateViewHolder> {
-
+    public class MothView {
         private final Calendar calendar = initCalendar(Calendar.getInstance());
         private int firstDayPosition = -1;
-        private int count;
         private int monthDays;
         private int year;
         private int month;
 
-        @Override
-        public DateViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return new DateViewHolder(inflater.inflate(R.layout.item_date, parent, false));
+        private final ViewGroup[] line = new ViewGroup[6];
+        private final DayView[] dayViews = new DayView[7 * 6];
+
+        public MothView(ViewGroup viewGroup) {
+            for (int i = 0; i < viewGroup.getChildCount(); i++) {
+                ViewGroup group = (ViewGroup) viewGroup.getChildAt(i);
+                line[i] = group;
+                for (int j = 0; j < group.getChildCount(); j++) {
+                    dayViews[(i * 7) + j] = new DayView(group.getChildAt(j));
+                }
+            }
         }
 
-        @Override
-        public void onBindViewHolder(DateViewHolder holder, int position) {
-            final int day = position + 1 - firstDayPosition;
-            if (position < firstDayPosition) {
-                holder.itemView.setVisibility(View.GONE);
-            } else if (day > monthDays) {
-                holder.itemView.setVisibility(View.VISIBLE);
-                holder.day.setVisibility(View.GONE);
-            } else {
-                holder.itemView.setVisibility(View.VISIBLE);
-                holder.day.setVisibility(View.VISIBLE);
-            }
-            if (holder.day.getVisibility() != View.VISIBLE
-                    || holder.itemView.getVisibility() != View.VISIBLE)
+        public void setTime(int year, int month) {
+            if (firstDayPosition != -1
+                    && this.year == year
+                    && this.month == month) {
                 return;
+            }
+            this.year = year;
+            this.month = month;
 
-            holder.day.setText(String.valueOf(day));
+            calendar.set(year, month, 1);
+            firstDayPosition = (calendar.get(Calendar.DAY_OF_WEEK) - 1);//0是周日
+            monthDays = calendar.getActualMaximum(Calendar.DATE);
+            Log.d(TAG, "---------------------------------------");
+            Log.d(TAG, "year = " + year);
+            Log.d(TAG, "month = " + month);
+            Log.d(TAG, "firstDayPosition = " + firstDayPosition);
+            Log.d(TAG, "monthDays = " + monthDays);
 
+            setupView();
+        }
+
+        private void setupView() {
+            for (int position = 0; position < dayViews.length; position++) {
+                DayView dayView = dayViews[position];
+                final int day = position + 1 - firstDayPosition;
+                if (position < firstDayPosition) {
+                    dayView.itemView.setVisibility(View.INVISIBLE);
+                } else if (day > monthDays) {
+                    dayView.itemView.setVisibility(View.VISIBLE);
+                    dayView.day.setVisibility(View.GONE);
+                } else {
+                    dayView.itemView.setVisibility(View.VISIBLE);
+                    dayView.day.setVisibility(View.VISIBLE);
+                }
+                if (dayView.day.getVisibility() != View.VISIBLE
+                        || dayView.itemView.getVisibility() != View.VISIBLE)
+                    continue;
+
+                if (dayView.day.getVisibility() != View.VISIBLE
+                        || dayView.itemView.getVisibility() != View.VISIBLE)
+                    continue;
+
+                dayView.day.setText(String.valueOf(day));
+
+                setupNode(dayView, day);
+            }
+        }
+
+        private void setupNode(DayView dayView, int day) {
             final int select = getSelect(day);
             Log.d(TAG, "select = " + year + " " + month + " " + day);
             if (select == NODE_MIDDLE) {
-                holder.day.setBackgroundResource(R.drawable.bg_select_middle);
+                dayView.day.setBackgroundResource(R.drawable.bg_select_middle);
             } else if (select == NODE_START) {
-                holder.day.setBackgroundResource(R.drawable.bg_select_start);
+                dayView.day.setBackgroundResource(R.drawable.bg_select_start);
             } else if (select == NODE_END) {
-                holder.day.setBackgroundResource(R.drawable.bg_select_end);
+                dayView.day.setBackgroundResource(R.drawable.bg_select_end);
             } else {
-                holder.day.setBackgroundResource(R.drawable.bg_select_normal);
+                dayView.day.setBackgroundResource(R.drawable.bg_select_normal);
             }
         }
 
@@ -228,43 +269,42 @@ class DayPickerEngine {
             return NODE_MIDDLE;
         }
 
-
-        public void setTime(int year, int month) {
-            if (firstDayPosition != -1
-                    && this.year == year
-                    && this.month == month) {
-                return;
+        public void notifyDataForce() {
+            for (int position = 0; position < dayViews.length; position++) {
+                DayView dayView = dayViews[position];
+                if (dayView.day.getVisibility() != View.VISIBLE
+                        || dayView.itemView.getVisibility() != View.VISIBLE)
+                    continue;
+                final int day = position + 1 - firstDayPosition;
+                setupNode(dayView, day);
             }
-            this.year = year;
-            this.month = month;
-
-            calendar.set(year, month, 1);
-            firstDayPosition = (calendar.get(Calendar.DAY_OF_WEEK) - 1);//0是周日
-
-            monthDays = calendar.getActualMaximum(Calendar.DATE);
-            count = monthDays + firstDayPosition;
-            final int r = count % WEEKS_DAY;
-            if (r != 0) {
-                count += (WEEKS_DAY - r);
-            }
-
-            notifyDataSetChanged();
         }
 
-        @Override
-        public int getItemCount() {
-            return count;
+        private class DayView implements View.OnClickListener {
+            final View itemView;
+            final TextView day;
+
+            public DayView(View itemView) {
+                this.itemView = itemView;
+                day = (TextView) itemView.findViewById(R.id.tv_day);
+                day.setOnClickListener(this);
+            }
+
+            @Override
+            public void onClick(View v) {
+                if (onItemClickListener != null)
+                    onItemClickListener.onItem(year, month, getPositionInDays() + 1 - firstDayPosition);
+            }
+
+            public int getPositionInDays() {
+                for (int i = 0; i < dayViews.length; i++) {
+                    if (dayViews[i] == this)
+                        return i;
+                }
+                throw new IllegalStateException();
+            }
         }
     }
 
-    private class DateViewHolder extends RecyclerView.ViewHolder {
-
-        TextView day;
-
-        public DateViewHolder(View itemView) {
-            super(itemView);
-            day = (TextView) itemView.findViewById(R.id.tv_day);
-        }
-    }
 
 }
