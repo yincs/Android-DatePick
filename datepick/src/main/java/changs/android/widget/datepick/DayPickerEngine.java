@@ -92,7 +92,7 @@ class DayPickerEngine {
                 || endCalendar == null) return;
 
         if (endCalendar.before(startCalendar)) {
-            Log.e(TAG, "结束日期在开始日期之前");
+            Log.e(TAG, "End date before the start date");
             return;
         }
 

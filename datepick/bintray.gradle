@@ -1,0 +1,54 @@
+apply plugin: 'com.novoda.bintray-release'
+
+// javadoc configuration
+
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+javadoc {
+    options {
+        encoding "UTF-8"
+        charSet 'UTF-8'
+        author true
+        version "0.0.1"
+        links "http://docs.oracle.com/javase/7/docs/api"
+        title "widget-datepick"
+    }
+}
+
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+tasks.withType(Javadoc) {
+    options.encoding = "UTF-8"
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+publish {
+    userOrg = 'yincs'//bintray.com用户名
+    groupId = 'changs.android'//jcenter上的路径
+    artifactId = 'widget-datepick'//项目名称
+    publishVersion = '0.0.1'//版本号
+    desc = 'This is an android date pick widget'//描述，不重要
+    website = 'https://github.com/yincs/Android-DatePick'//网站，不重要
+}
+
+
