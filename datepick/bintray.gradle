@@ -43,12 +43,12 @@ artifacts {
 }
 
 publish {
-    userOrg = 'yincs'//bintray.com用户名
-    groupId = 'changs.android'//jcenter上的路径
-    artifactId = 'widget-datepick'//项目名称
-    publishVersion = '0.0.1'//版本号
-    desc = 'This is an android date pick widget'//描述，不重要
-    website = 'https://github.com/yincs/Android-DatePick'//网站，不重要
+    userOrg = 'yincs'
+    groupId = 'changs.android'
+    artifactId = 'widget-datepick'
+    publishVersion = '1.0.0'
+    desc = 'This is an android date pick widget'
+    website = 'https://github.com/yincs/Android-DatePick'
 }
 
 

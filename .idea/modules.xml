@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/DatePick.iml" filepath="$PROJECT_DIR$/DatePick.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Android-DatePick.iml" filepath="$PROJECT_DIR$/Android-DatePick.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/datepick/datepick.iml" filepath="$PROJECT_DIR$/datepick/datepick.iml" />
     </modules>

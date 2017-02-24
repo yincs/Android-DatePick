@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="line">#003580</color>
+    <color name="line">#C6C6C6</color>
     <color name="node">#1E90E5</color>
     <color name="select">#B4E2F6</color>
     <color name="normal">#00000000</color>

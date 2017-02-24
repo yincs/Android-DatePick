@@ -17,8 +17,10 @@ public class MainActivity extends AppCompatActivity {
 
         final DatePicker datePicker = (DatePicker) findViewById(R.id.datePicker);
 
-        datePicker.setStartDay(2017, 0, 8);
-        datePicker.setEndDay(2017, 1, 8);
+//        datePicker.setStartDay(2017, 0, 8);
+//        datePicker.setEndDay(2017, 1, 8);
+
+        datePicker.setDay(2017, 0, 8, 2017, 1, 8);
         datePicker.setOnItemClickListener(new DatePicker.OnItemClickListener() {
             @Override
             public void onItem(int year, int month, int day) {
